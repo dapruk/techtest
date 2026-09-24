@@ -1,6 +1,13 @@
-import { productSchema, type Product } from "./types/product"
+import { z } from "zod"
+
+import {
+  productSchema,
+  type CreateProductInput,
+  type Product,
+} from "./types/product"
 
 const PRODUCTS_ENDPOINT = "https://api.escuelajs.co/api/v1/products"
+const FILES_ENDPOINT = "https://api.escuelajs.co/api/v1/files/upload"
 
 export const PRODUCTS_PER_PAGE = 6
 
@@ -50,4 +57,60 @@ export async function getProducts({
     products: products.slice(0, PRODUCTS_PER_PAGE),
     hasNextPage: products.length > PRODUCTS_PER_PAGE,
   }
+}
+
+async function uploadProductImage(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const response = await fetch(FILES_ENDPOINT, {
+    method: "POST",
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error("Unable to upload product image")
+  }
+
+  const result = z
+    .object({ location: z.string() })
+    .safeParse(await response.json())
+
+  if (!result.success) {
+    throw new Error("The uploaded image response is invalid")
+  }
+
+  return result.data.location
+}
+
+export async function createProduct(
+  input: CreateProductInput
+): Promise<Product> {
+  const images = input.images ? [await uploadProductImage(input.images)] : []
+
+  const response = await fetch(PRODUCTS_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: input.title,
+      price: input.price,
+      description: input.description || "",
+      categoryId: input.categoryId,
+      images,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error("Unable to create product")
+  }
+
+  const result = productSchema.safeParse(await response.json())
+
+  if (!result.success) {
+    throw new Error("The created product response is invalid")
+  }
+
+  return result.data
 }

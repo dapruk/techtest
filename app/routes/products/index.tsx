@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 
 import { ProductCard } from "~/components/feature/product/product-card"
+import { ProductForm } from "~/components/feature/product/product-form"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { toast } from "~/components/ui/toast"
@@ -73,7 +74,7 @@ export default function Index() {
       <nav className="flex items-center justify-between rounded-xl border bg-card px-4 py-3">
         <span className="text-lg font-semibold">Product Store</span>
         <div className="flex gap-2">
-          <Button variant="outline">Cart</Button>
+          <ProductForm />
           <Button variant="outline" onClick={handleLogout}>
             Logout
           </Button>
