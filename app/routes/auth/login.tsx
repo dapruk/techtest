@@ -1,3 +1,6 @@
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Controller, useForm } from "react-hook-form"
+
 import { Button } from "~/components/ui/button"
 import {
   Card,
@@ -6,26 +9,111 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
-import { Label } from "~/components/ui/label"
+import { toast } from "~/components/ui/toast"
+import { login } from "~/feature/auth/login"
+import { loginSchema, type LoginInput } from "~/feature/auth/types/auth"
 
 export default function Index() {
+  const form = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  })
+
+  function onSubmit(values: LoginInput) {
+    form.clearErrors("root")
+
+    const result = login(values)
+
+    if (!result.success) {
+      form.setError("root", { message: result.message })
+      toast.add({
+        title: "Login failed",
+        description: result.message,
+        type: "error",
+      })
+      return
+    }
+
+    form.reset()
+    toast.add({
+      title: "Login successful",
+      description: `Welcome back, ${result.session.username}`,
+      type: "success",
+    })
+  }
+
   return (
-    <div className="flex h-screen flex-1 items-center justify-center">
-      <Card className="w-[25vw]">
+    <div className="flex min-h-[calc(100svh-3rem)] flex-1 items-center justify-center">
+      <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold">
             Login
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <Label>Username</Label>
-          <Input type="text" placeholder="Username" />
-          <Label>Password</Label>
-          <Input type="password" placeholder="Password" />
+        <CardContent>
+          <form id="login-form" onSubmit={form.handleSubmit(onSubmit)}>
+            <FieldGroup>
+              <Controller
+                name="username"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Username</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      type="text"
+                      placeholder="Username"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="password"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      type="password"
+                      placeholder="Password"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              {form.formState.errors.root && (
+                <FieldError>{form.formState.errors.root.message}</FieldError>
+              )}
+            </FieldGroup>
+          </form>
         </CardContent>
         <CardFooter>
-          <Button className="w-full">Login</Button>
+          <Button
+            className="w-full"
+            type="submit"
+            form="login-form"
+            disabled={form.formState.isSubmitting}
+          >
+            Login
+          </Button>
         </CardFooter>
       </Card>
     </div>
