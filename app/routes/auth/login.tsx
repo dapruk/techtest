@@ -1,5 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Loader2Icon } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
+import { useNavigate } from "react-router"
 
 import { Button } from "~/components/ui/button"
 import {
@@ -17,10 +19,13 @@ import {
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
 import { toast } from "~/components/ui/toast"
+import { useAuthGuard } from "~/feature/auth/authguard"
 import { login } from "~/feature/auth/login"
 import { loginSchema, type LoginInput } from "~/feature/auth/types/auth"
 
 export default function Index() {
+  const navigate = useNavigate()
+  const allowed = useAuthGuard("guest", "/products")
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -50,6 +55,19 @@ export default function Index() {
       description: `Welcome back, ${result.session.username}`,
       type: "success",
     })
+    navigate("/products", { replace: true })
+  }
+
+  if (allowed === null) {
+    return (
+      <div className="flex min-h-[calc(100svh-3rem)] flex-1 items-center justify-center">
+        <Loader2Icon className="size-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!allowed) {
+    return null
   }
 
   return (
