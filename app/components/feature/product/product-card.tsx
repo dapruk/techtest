@@ -1,3 +1,5 @@
+import type { Product } from "~/feature/product/types/product"
+
 import {
   Card,
   CardContent,
@@ -7,20 +9,27 @@ import {
 } from "~/components/ui/card"
 
 type ProductCardProps = {
-  name: string
-  description: string
-  price: number
+  product: Product
 }
 
-export function ProductCard({ name, description, price }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
+  const image = product.images[0] || product.category.image
+
   return (
-    <Card>
+    <Card className="h-full pt-0">
+      <div className="aspect-square overflow-hidden bg-muted">
+        <img
+          src={image}
+          alt={product.title}
+          className="h-full w-full object-cover transition-transform group-hover/card:scale-105"
+        />
+      </div>
       <CardHeader>
-        <CardTitle>{name}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle>{product.title}</CardTitle>
+        <CardDescription>{product.category.name}</CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-lg font-semibold">${price.toFixed(2)}</p>
+        <p className="text-lg font-semibold">${product.price.toFixed(2)}</p>
       </CardContent>
     </Card>
   )
